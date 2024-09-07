@@ -11,91 +11,91 @@ set -euo pipefail
 ## Software:
 # BEDtools needs to be included in $PATH (v2.30.0; https://bedtools.readthedocs.io/en/latest/)
 # SAMtools needs to be included in $PATH (v1.11; http://www.htslib.org/)
-GATK3=/home/nibtve93/software/GenomeAnalysisTK-3.8-1-0-gf15c1c3ef/GenomeAnalysisTK.jar (v3.8.1.0; https://gatk.broadinstitute.org/hc/en-us)
+gatk3=/home/nibtve93/software/GenomeAnalysisTK-3.8-1-0-gf15c1c3ef/GenomeAnalysisTK.jar (v3.8.1.0; https://gatk.broadinstitute.org/hc/en-us)
 
 ## Command-line args:
-IND_FILE=$1
-VCF_ALTREF=$2
-REFERENCE=$3
-BAM_DIR=$4
-SUFFIX=$5
-MIN_DP=$6
-INDFASTA_DIR=$7
-BED_DIR=$8
-BED_REMOVED_SITES=$9
-INDV=$(sed -n "$SLURM_ARRAY_TASK_ID"p $IND_FILE)
+ind_file=$1
+vcf_altref=$2
+reference=$3
+bam_dir=$4
+suffix=$5
+min_dp=$6
+indfasta_dir=$7
+bed_dir=$8
+bed_removed_sites=$9
+indv=$(sed -n "$SLURM_ARRAY_TASK_ID"p $ind_file)
 
-BAM=$BAM_DIR/$INDV.*$SUFFIX.bam
+bam=$bam_dir/$indv.*$suffix.bam
 
-CALLABLE_SUMMARY=$BED_DIR/$INDV.callableloci.sumtable.txt
-BED_OUT=$BED_DIR/$INDV.callablelocioutput.bed
-BED_NONCALLABLE=$BED_DIR/$INDV.noncallable.bed
-BED_CALLABLE=$BED_DIR/$INDV.callable.bed
+callable_summary=$bed_dir/$indv.callableloci.sumtable.txt
+bed_out=$bed_dir/$indv.callablelocioutput.bed
+bed_noncallable=$bed_dir/$indv.noncallable.bed
+bed_callable=$bed_dir/$indv.callable.bed
 
-FASTA_ALTREF=$INDFASTA_DIR/$INDV.altref.fasta
-FASTA_MASKED=$INDFASTA_DIR/$INDV.altrefmasked.fasta
+fasta_altref=$indfasta_dir/$indv.altref.fasta
+fasta_masked=$indfasta_dir/$indv.altrefmasked.fasta
 
 ## Report:
 echo -e "\n\n###################################################################"
 date
 echo -e "#### 02_process-inds.sh: Starting script."
-echo -e "#### 02_process-inds.sh: File with individuals: $IND_FILE"
-echo -e "#### 02_process-inds.sh: Raw VCF: $VCF_ALTREF"
-echo -e "#### 02_process-inds.sh: Reference genome: $REFERENCE"
-echo -e "#### 02_process-inds.sh: Directory with BAM files: $BAM_DIR"
-echo -e "#### 02_process-inds.sh: BAM file suffix: $SUFFIX"
-echo -e "#### 02_process-inds.sh: Minimum depth for CallableLoci: $MIN_DP"
-echo -e "#### 02_process-inds.sh: Directory for FASTA files: $INDFASTA_DIR"
-echo -e "#### 02_process-inds.sh: Directory with BED file: $BED_DIR"
-echo -e "#### 02_process-inds.sh: BED file with removed sites: $BED_REMOVED_SITES"
-echo -e "#### 02_process-inds.sh: Individual: $INDV"
-echo -e "#### 02_process-inds.sh: BAM file: $BAM"
-echo -e "#### 02_process-inds.sh: CallableLoci summary: $CALLABLE_SUMMARY"
-echo -e "#### 02_process-inds.sh: CallableLoci output BED all: $BED_OUT"
-echo -e "#### 02_process-inds.sh: CallableLoci output BED non-callable: $BED_NONCALLABLE"
-echo -e "#### 02_process-inds.sh: CallableLoci output BED callable: $BED_CALLABLE"
-echo -e "#### 02_process-inds.sh: Raw FASTA genome: $FASTA_ALTREF"
-echo -e "#### 02_process-inds.sh: Masked FASTA genome: $FASTA_MASKED \n\n"
+echo -e "#### 02_process-inds.sh: File with individuals: $ind_file"
+echo -e "#### 02_process-inds.sh: Raw VCF: $vcf_altref"
+echo -e "#### 02_process-inds.sh: Reference genome: $reference"
+echo -e "#### 02_process-inds.sh: Directory with BAM files: $bam_dir"
+echo -e "#### 02_process-inds.sh: BAM file suffix: $suffix"
+echo -e "#### 02_process-inds.sh: Minimum depth for CallableLoci: $min_dp"
+echo -e "#### 02_process-inds.sh: Directory for FASTA files: $indfasta_dir"
+echo -e "#### 02_process-inds.sh: Directory with BED file: $bed_dir"
+echo -e "#### 02_process-inds.sh: BED file with removed sites: $bed_removed_sites"
+echo -e "#### 02_process-inds.sh: Individual: $indv"
+echo -e "#### 02_process-inds.sh: BAM file: $bam"
+echo -e "#### 02_process-inds.sh: CallableLoci summary: $callable_summary"
+echo -e "#### 02_process-inds.sh: CallableLoci output BED all: $bed_out"
+echo -e "#### 02_process-inds.sh: CallableLoci output BED non-callable: $bed_noncallable"
+echo -e "#### 02_process-inds.sh: CallableLoci output BED callable: $bed_callable"
+echo -e "#### 02_process-inds.sh: Raw FASTA genome: $fasta_altref"
+echo -e "#### 02_process-inds.sh: Masked FASTA genome: $fasta_masked \n\n"
 
 ################################################################################
 #### CREATE MASKED FASTA GENOME FOR INDIVIDUAL ####
 ################################################################################
 ## Index BAM file if not yet done
-[[ ! -e $BAM.bai ]] && echo -e "#### 02_process-inds.sh: Indexing bam ..." && samtools index $BAM
+[[ ! -e $bam.bai ]] && echo -e "#### 02_process-inds.sh: Indexing bam ..." && samtools index $bam
 
 ## Run GATK CallableLoci to produce BED file for sites that are (non-)callable for a single sample
 echo -e "#### 02_process-inds.sh: Running CallableLoci ..."
-java -jar $GATK3 -T CallableLoci -R $REFERENCE -I $BAM -summary $CALLABLE_SUMMARY --minDepth $MIN_DP -o $BED_OUT
+java -jar $gatk3 -T CallableLoci -R $reference -I $bam -summary $callable_summary --minDepth $min_dp -o $bed_out
 # Separate into two files
-grep -v "CALLABLE" $BED_OUT > $BED_NONCALLABLE
-grep "CALLABLE" $BED_OUT > $BED_CALLABLE
+grep -v "CALLABLE" $bed_out > $bed_noncallable
+grep "CALLABLE" $bed_out > $bed_callable
 
 ## Produce whole-genome FASTA file for a single sample
 echo -e "#### 02_process-inds.sh: Running FastaAlternateReferenceMaker ..."
-java -jar $GATK3 -T FastaAlternateReferenceMaker -IUPAC $INDV -R $REFERENCE -V $VCF_ALTREF -o $FASTA_ALTREF
+java -jar $gatk3 -T FastaAlternateReferenceMaker -IUPAC $indv -R $reference -V $vcf_altref -o $fasta_altref
 # Edit FASTA headers
-sed -i -e 's/:1//g' -e 's/>[0-9]* />/g' $FASTA_ALTREF
+sed -i -e 's/:1//g' -e 's/>[0-9]* />/g' $fasta_altref
 ## Count bases
-N_ACGT=$(grep -Eo "A|C|G|T" $FASTA_ALTREF | wc -l)
-N_AMBIG=$(grep -Eo "M|R|W|S|Y|K" $FASTA_ALTREF | wc -l)
-echo -e "#### 02_process-inds.sh: Number of A/C/G/T in FASTA_ALTREF: $N_ACGT"
-echo -e "#### 02_process-inds.sh: Number of heterozygous sites (counted by ambiguity code) in FASTA_ALTREF: $N_AMBIG"
+n_acgt=$(grep -Eo "A|C|G|T" $fasta_altref | wc -l)
+n_ambig=$(grep -Eo "M|R|W|S|Y|K" $fasta_altref | wc -l)
+echo -e "#### 02_process-inds.sh: Number of A/C/G/T in fasta_altref $n_acgt"
+echo -e "#### 02_process-inds.sh: Number of heterozygous sites (counted by ambiguity code) in fasta_altref: $n_ambig"
 
 ## Mask sites identified as non-callable or removed during VCF filtering in whole-genome FASTA
 echo -e "#### 02_process-inds.sh: Running BEDtools maskfasta ..."
 # Mask non-callable sites
 echo -e "## 02_process-inds.sh: Non-callable sites ..."
-bedtools maskfasta -fi $FASTA_ALTREF -bed $BED_NONCALLABLE -fo $FASTA_MASKED.intermed.fasta
+bedtools maskfasta -fi $fasta_altref -bed $bed_noncallable -fo $fasta_masked.intermed.fasta
 # Mask removed sites
 echo -e "## 02_process-inds.sh: Callable sites ..."
-bedtools maskfasta -fi $FASTA_MASKED.intermed.fasta -bed $BED_REMOVED_SITES -fo $FASTA_MASKED
+bedtools maskfasta -fi $fasta_masked.intermed.fasta -bed $bed_removed_sites -fo $fasta_masked
 # Counting Ns in FASTA files:
-NCOUNT_FASTA_ALTREF=$(grep -Fo "N" $FASTA_ALTREF | wc -l)
-NCOUNT_FASTA_MASKED_INTERMED=$(grep -Fo "N" $FASTA_MASKED.intermed.fasta | wc -l)
-NCOUNT_FASTA_MASKED=$(grep -Fo "N" $FASTA_MASKED | wc -l)
-echo -e "#### 02_process-inds.sh: Number of Ns in FASTA_ALTREF: $NCOUNT_FASTA_ALTREF"
-echo -e "#### 02_process-inds.sh: Number of Ns in FASTA_MASKED_INTERMED: $NCOUNT_FASTA_MASKED_INTERMED"
-echo -e "#### 02_process-inds.sh: Number of Ns in FASTA_MASKED: $NCOUNT_FASTA_MASKED"
+ncount_fasta_altref=$(grep -Fo "N" $fasta_altref | wc -l)
+ncount_fasta_masked_intermed=$(grep -Fo "N" $fasta_masked.intermed.fasta | wc -l)
+ncount_fasta_masked=$(grep -Fo "N" $fasta_masked | wc -l)
+echo -e "#### 02_process-inds.sh: Number of Ns in fasta_altref: $ncount_fasta_altref"
+echo -e "#### 02_process-inds.sh: Number of Ns in fasta_masked_intermed: $ncount_fasta_masked_intermed"
+echo -e "#### 02_process-inds.sh: Number of Ns in fasta_masked: $ncount_fasta_masked"
 
 ## Report:
 echo -e "\n#### 02_process-inds.sh: Done with script."

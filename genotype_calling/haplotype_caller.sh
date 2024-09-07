@@ -11,15 +11,15 @@ set -euo pipefail
 # gatk needs to be included in $PATH (v4.1.9.0; https://gatk.broadinstitute.org/hc/en-us)
 
 ## Command-line args:
-NT=$1
-MEM=$2
-REFERENCE=$3
-IND_FILE=$4
-BAM_DIR=$5
-SUFFIX=$6
-GVCF_DIR=$7
+nt=$1
+mem=$2
+reference=$3
+ind_file=$4
+bam_dir=$5
+suffix=$6
+gvcf_dir=$7
 
-INDV=$(sed -n "$SLURM_ARRAY_TASK_ID"p $IND_FILE)
+indv=$(sed -n "$SLURM_ARRAY_TASK_ID"p $ind_file)
 
 ## Activate conda environment
 conda activate java
@@ -28,23 +28,23 @@ conda activate java
 echo -e "\n\n###################################################################"
 date
 echo -e "#### haplotype_caller.sh: Starting script."
-echo -e "#### haplotype_caller.sh: Number of threads: $NT"
-echo -e "#### haplotype_caller.sh: Memory: $MEM"
-echo -e "#### haplotype_caller.sh: Reference genome: $REFERENCE"
-echo -e "#### haplotype_caller.sh: List with individuals: $IND_FILE"
-echo -e "#### haplotype_caller.sh: Directory with BAM files: $BAM_DIR"
-echo -e "#### haplotype_caller.sh: Suffix of BAM files: $SUFFIX"
-echo -e "#### haplotype_caller.sh: Output directory for GVCF files: $GVCF_DIR"
-echo -e "#### haplotype_caller.sh: Individual: $INDV \n\n"
+echo -e "#### haplotype_caller.sh: Number of threads: $nt"
+echo -e "#### haplotype_caller.sh: Memory: $mem"
+echo -e "#### haplotype_caller.sh: Reference genome: $reference"
+echo -e "#### haplotype_caller.sh: List with individuals: $ind_file"
+echo -e "#### haplotype_caller.sh: Directory with BAM files: $bam_dir"
+echo -e "#### haplotype_caller.sh: Suffix of BAM files: $suffic"
+echo -e "#### haplotype_caller.sh: Output directory for GVCF files: $gvcf_dir"
+echo -e "#### haplotype_caller.sh: Individual: $indv \n\n"
 
 ################################################################################
 #### CREATE GVCF FILE ####
 ################################################################################
-echo -e "#### haplotype_caller.sh: Indexing BAM file for individual $INDV ...\n"
-[[ ! -f $BAM_DIR/$INDV.$SUFFIX.bai ]] && samtools index $BAM_DIR/$INDV.$SUFFIX
+echo -e "#### haplotype_caller.sh: Indexing BAM file for individual $indv ...\n"
+[[ ! -f $bam_dir/$indv.$suffic.bai ]] && samtools index $bam_dir/$indv.$suffic
 
-echo -e "#### haplotype_caller.sh: Creating GVCF file for individual $INDV ...\n"
-gatk --java-options "-Xmx${MEM}g" HaplotypeCaller -R $REFERENCE -I $BAM_DIR/$INDV.$SUFFIX -O $GVCF_DIR/$INDV.rawvariants.g.vcf.gz -ERC GVCF --pairHMM AVX_LOGLESS_CACHING_OMP --native-pair-hmm-threads $NT
+echo -e "#### haplotype_caller.sh: Creating GVCF file for individual $indv ...\n"
+gatk --java-options "-Xmx${mem}g" HaplotypeCaller -R $reference -I $bam_dir/$indv.$suffic -O $gvcf_dir/$indv.rawvariants.g.vcf.gz -ERC GVCF --pairHMM AVX_LOGLESS_CACHING_OMP --native-pair-hmm-threads $nt
 
 ## Report:
 echo -e "\n#### haplotype_caller.sh: Done with script."

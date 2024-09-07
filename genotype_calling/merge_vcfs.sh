@@ -10,8 +10,8 @@ set -euo pipefail
 # gatk needs to be included in $PATH (v4.1.9.0; https://gatk.broadinstitute.org/hc/en-us)
 
 ## Command-line args:
-VCF_LIST=$1
-VCF_FILE=$2
+vcf_list=$1
+vcf_file=$2
 
 ## Activate conda environment
 conda activate java
@@ -20,17 +20,17 @@ conda activate java
 echo -e "\n\n###################################################################"
 date
 echo -e "#### merge_vcfs.sh: Starting script."
-echo -e "#### merge_vcfs.sh: List of per-scaffold VCF files: $VCF_LIST"
-echo -e "#### merge_vcfs.sh: Output VCF file: $VCF_FILE \n\n"
+echo -e "#### merge_vcfs.sh: List of per-scaffold VCF files: $vcf_list"
+echo -e "#### merge_vcfs.sh: Output VCF file: $vcf_file \n\n"
 
 ################################################################################
 #### MERGE PER-SCAFFOLD VCF FILES ####
 ################################################################################
 echo -e "#### merge_vcfs.sh: Merging per-scaffold VCF files ...\n"
-gatk MergeVcfs -I $VCF_LIST -O $VCF_FILE
+gatk MergeVcfs -I $vcf_list -O $vcf_file
 
 echo -e "#### merge_vcfs.sh: Extracting VCF file ...\n"
-gzip -d $VCF_FILE
+gzip -d $vcf_file
 
 ## Report:
 echo -e "\n#### merge_vcfs.sh: Done with script."

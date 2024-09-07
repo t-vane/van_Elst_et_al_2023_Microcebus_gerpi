@@ -8,30 +8,30 @@ set -euo pipefail
 ################################################################################
 
 ## Command-line args:
-SCRIPTS_DIR=$1
-MCMC_NM=$2
-MCMC_M=$3
-SUMMARY=$4
-OUT_DIR=$5
+scripts_dir=$1
+mcmc_nm=$2
+mcmc_m=$3
+summary=$4
+out_dir=$5
 
 ## Report:
 echo -e "\n\n###################################################################"
 date
 echo -e "#### plot_coal_main.sh: Starting script."
-echo -e "#### plot_coal_main.sh: Directory with scripts: $SCRIPTS_DIR"
-echo -e "#### plot_coal_main.sh: MCMC (no migration): $MCMC_NM"
-echo -e "#### plot_coal_main.sh: MCMC (migration): $MCMC_M"
-echo -e "#### plot_coal_main.sh: Summary table with divergence times, migration rates and genealogical divergence indices: $MCMC_M"
-echo -e "#### plot_coal_main.sh: Output directory: $OUT_DIR \n\n"
+echo -e "#### plot_coal_main.sh: Directory with scripts: $scripts_dir"
+echo -e "#### plot_coal_main.sh: MCMC (no migration): $mcmc_nm"
+echo -e "#### plot_coal_main.sh: MCMC (migration): $mcmc_m"
+echo -e "#### plot_coal_main.sh: Summary table with divergence times, migration rates and genealogical divergence indices: $summary"
+echo -e "#### plot_coal_main.sh: Output directory: $out_dir \n\n"
 
 ################################################################################
 #### PLOT MAIN FIGURES ####
 ################################################################################
 echo -e "#### plot_coal_main.sh: Plotting models ..."
-Rscript $SCRIPTS_DIR/plot_coal_models.R $MCMC_NM $MCMC_M $OUT_DIR
+Rscript $scripts_dir/plot_coal_models.R $mcmc_nm $mcmc_m $out_dir
 
 echo -e "#### plot_coal_main.sh: Plotting parameter estimates ..."
-Rscript $SCRIPTS_DIR/plot_coal_params.R $SUMMARY $OUT_DIR
+Rscript $scripts_dir/plot_coal_params.R $summary $out_dir
 
 ## Report:
 echo -e "\n#### plot_coal_main.sh: Done with script."

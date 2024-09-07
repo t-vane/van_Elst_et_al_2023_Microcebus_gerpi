@@ -8,29 +8,29 @@ set -euo pipefail
 ################################################################################
 
 ## Command-line args:#
-SCRIPTS_DIR=$1
-LOCUSSTATS=$2
-IN_DIR=$3
-OUT_DIR=$4
-MAXMISS=$5
-MINDIST=$6
+scripts_dir=$1
+locus_stats=$2
+in_dir=$3
+out_dir=$4
+maxmiss=$5
+mindist=$6
 
 ## Report:
 echo -e "\n\n###################################################################"
 date
 echo -e "#### 03f_filterloci.sh: Starting script."
-echo -e "#### 03f_filterloci.sh: Directory with scripts: $SCRIPTS_DIR"
-echo -e "#### 03f_filterloci.sh: File with locus statistics: $LOCUSSTATS"
-echo -e "#### 03f_filterloci.sh: Input FASTA directory: $IN_DIR"
-echo -e "#### 03f_filterloci.sh: Output FASTA directory: $OUT_DIR"
-echo -e "#### 03f_filterloci.sh: Maximum percentage of missing data: $MAXMISS"
-echo -e "#### 03f_filterloci.sh: Minimum distance (bp) between loci: $MINDIST \n\n"
+echo -e "#### 03f_filterloci.sh: Directory with scripts: $scripts_dir"
+echo -e "#### 03f_filterloci.sh: File with locus statistics: $locus_stats"
+echo -e "#### 03f_filterloci.sh: Input FASTA directory: $in_dir"
+echo -e "#### 03f_filterloci.sh: Output FASTA directory: $out_dir"
+echo -e "#### 03f_filterloci.sh: Maximum percentage of missing data: $maxmiss"
+echo -e "#### 03f_filterloci.sh: Minimum distance (bp) between loci: $mindist \n\n"
 
 ################################################################################
 #### FILTER LOCI FOR MISSING DATA AND DISTANCE ####
 ################################################################################
 echo -e "#### 03f_filterloci.sh: Running script to filter for missing data and distance ..."
-Rscript $SCRIPTS_DIR/03f_filterloci.R $LOCUSSTATS $IN_DIR $OUT_DIR $MAXMISS$ $MINDIST
+Rscript $scripts_dir/03f_filterloci.R $locus_stats $in_dir $out_dir $maxmiss$ $mindist
 
 ## Report:
 echo -e "\n#### 03f_filterloci.sh: Done with script."

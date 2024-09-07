@@ -8,43 +8,43 @@ set -euo pipefail
 ################################################################################
 
 ## Command-line args:
-SCRIPTS_DIR=$1
-SET_ID=$2
-IND_FILE=$3
-BED_DIR=$4
-LOCUSBED_INTERMED=$5
-MIN_ELEM_OVL=$6
-MIN_ELEM_OVL_TRIM=$7
-MIN_LOCUS_SIZE=$8
-MAX_DIST_WITHIN_IND=$9
-MAX_DIST_BETWEEN_IND=$10
-MIN_ELEM_SIZE=$11
-LAST_ROW=$12
+scripts_dir=$1
+set_id=$2
+ind_file=$3
+bed_dir=$4
+locusbed_intermed=$5
+min_elem_ovl=$6
+min_elem_ovl_trim=$7
+min_locus_size=$8
+max_dist_within_ind=$9
+max_dist_between_ind=$10
+min_elem_size=$11
+last_row=$12
 
 ## Report:
 echo -e "\n\n###################################################################"
 date
 echo -e "#### 03a_makelocusbed.sh: Starting script."
-echo -e "#### 03a_makelocusbed.sh: Directory with scripts: $SCRIPTS_DIR"
-echo -e "#### 03a_makelocusbed.sh: Set ID: $SET_ID"
-echo -e "#### 03a_makelocusbed.sh: File with individuals: $IND_FILE"
-echo -e "#### 03a_makelocusbed.sh: Directory with BED files: $BED_DIR"
-echo -e "#### 03a_makelocusbed.sh: Output BED file: $LOCUSBED_INTERMED"
-echo -e "#### 03a_makelocusbed.sh: Minimum element overlap for locus creation: $MIN_ELEM_OVL"
-echo -e "#### 03a_makelocusbed.sh: Minimum element overlap for locus trimming: $MIN_ELEM_OVL_TRIM"
-echo -e "#### 03a_makelocusbed.sh: Minimum locus size: $MIN_LOCUS_SIZE"
-echo -e "#### 03a_makelocusbed.sh: Maximum distance within individuals: $MAX_DIST_WITHIN_IND"
-echo -e "#### 03a_makelocusbed.sh: Maximum distance between individuals: $MAX_DIST_BETWEEN_IND"
-echo -e "#### 03a_makelocusbed.sh: Minimum locus size: $MIN_ELEM_SIZE"
-echo -e "#### 03a_makelocusbed.sh: Number of loci to process (all if 0): $LAST_ROW \n\n"
+echo -e "#### 03a_makelocusbed.sh: Directory with scripts: $scripts_dir"
+echo -e "#### 03a_makelocusbed.sh: Set ID: $set_id"
+echo -e "#### 03a_makelocusbed.sh: File with individuals: $ind_file"
+echo -e "#### 03a_makelocusbed.sh: Directory with BED files: $bed_dir"
+echo -e "#### 03a_makelocusbed.sh: Output BED file: $locusbed_intermed"
+echo -e "#### 03a_makelocusbed.sh: Minimum element overlap for locus creation: $min_elem_ovl"
+echo -e "#### 03a_makelocusbed.sh: Minimum element overlap for locus trimming: $min_elem_ovl_trim"
+echo -e "#### 03a_makelocusbed.sh: Minimum locus size: $min_locus_size"
+echo -e "#### 03a_makelocusbed.sh: Maximum distance within individuals: $max_dist_within_ind"
+echo -e "#### 03a_makelocusbed.sh: Maximum distance between individuals: $max_dist_between_ind"
+echo -e "#### 03a_makelocusbed.sh: Minimum locus size: $min_elem_size"
+echo -e "#### 03a_makelocusbed.sh: Number of loci to process (all if 0): $last_row \n\n"
 
 ################################################################################
 #### MAKE BED FILE WITH LOCUS COORDINATES ####
 ################################################################################
 ## Run GATK CallableLoci to produce BED file for sites that are (non-)callable for a single sample
 echo -e "#### 03a_makelocusbed.sh: Running script to create BED file with locus coordinates ..."
-Rscript $SCRIPTS_DIR/03a_makelocusbed.R $SET_ID $IND_FILE $BED_DIR $LOCUSBED_INTERMED \
-	$MIN_ELEM_OVL $MIN_ELEM_OVL_TRIM $MIN_LOCUS_SIZE $MAX_DIST_WITHIN_IND $MAX_DIST_BETWEEN_IND $MIN_ELEM_SIZE $LAST_ROW
+Rscript $scripts_dir/03a_makelocusbed.R $set_id $ind_file $bed_dir $locusbed_intermed \
+	$min_elem_ovl $min_elem_ovl_trim $min_locus_size $max_dist_within_ind $max_dist_between_ind $min_elem_size $last_row
 
 ## Report:
 echo -e "\n#### 03a_makelocusbed.sh: Done with script."

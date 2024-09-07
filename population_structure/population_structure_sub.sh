@@ -4,63 +4,63 @@
 ## Software:
 # realSFS needs to be included in $PATH (http://www.popgen.dk/angsd/index.php/RealSFS)
 
-SCRIPTS_DIR=/home/nibtve93/scripts/populationStructure
+scripts_dir=/home/nibtve93/scripts/populationStructure
 
-SET_ID=gerpi
-POP_DIR=$PWORK/$SET_ID/populationStructure
-BEAGLE=$PWORK/$SET_ID/angsd/$SET_ID.beagle.gz # Genotype likelihood file created in genotype_likelihoods_sub.sh
+set_id=gerpi
+pop_dir=$PWORK/$set_id/populationStructure
+beagle=$PWORK/$set_id/angsd/$set_id.beagle.gz # Genotype likelihood file created in genotype_likelihoods_sub.sh
 
-mkdir -p $POP_DIR/logFiles
+mkdir -p $pop_dir/logFiles
 
 #################################################################
 #### 1 PRINCIPAL COMPONENT ANALYSIS ####
 #################################################################
-mkdir -p $POP_DIR/pca
+mkdir -p $pop_dir/pca
 
-IND_FILE=$POP_DIR/$SET_ID.txt # File with individual IDs in first column and population assignments in second column
-NT=20
+ind_file=$pop_dir/$set_id.txt # File with individual IDs in first column and population assignments in second column
+nt=20
 
-sbatch --account=nib00015 --output=$POP_DIR/logFiles/pca.$SET_ID.oe $SCRIPTS_DIR/pca.sh $NT $BEAGLE $POP_DIR/pca $SCRIPTS_DIR $IND_FILE $SET_ID
+sbatch --account=nib00015 --output=$pop_dir/logFiles/pca.$set_id.oe $scripts_dir/pca.sh $nt $beagle $pop_dir/pca $scripts_dir $ind_file $set_id
 
 #################################################################
 #### 2 ADMIXTURE ####
 #################################################################
-mkdir -p $POP_DIR/ngsadmix
+mkdir -p $pop_dir/ngsadmix
 
-CLUSTERS=10 # Maximum number of clusters to assume in admixture analysis
-REPEATS=10 # Number of independent runs
-PERCENTAGE="75/100" # Minimum percentage of represented individuals
-MININD=$(( ($(zcat $BEAGLE | head -1 | wc -w)/3-1) * $PERCENTAGE )) # Minimum number of represented individuals
-NT=80
+clusters=10 # Maximum number of clusters to assume in admixture analysis
+repeats=10 # Number of independent runs
+percentage="75/100" # Minimum percentage of represented individuals
+minind=$(( ($(zcat $beagle | head -1 | wc -w)/3-1) * $percentage )) # Minimum number of represented individuals
+nt=80
 
-## Submit array job to infer individual ancestries for each number of clusters (ranging from 1 to $CLUSTERS), using $REPEATS repetitions 
-for K in $(seq 1 $CLUSTERS)
+## Submit array job to infer individual ancestries for each number of clusters (ranging from 1 to $clusters), using $repeats repetitions 
+for k in $(seq 1 $clusters)
 do
-	JID=$(sbatch --array=1-$REPEATS --output=$POP_DIR/logFiles/ngsadmix$K.$SET_ID.%A_%a.oe $SCRIPTS_DIR/ngsadmix.sh $NT $K $BEAGLE $POP_DIR/ngsadmix $MININD $SET_ID)
-	declare RUNID_$K=${JID##* }
+	jid=$(sbatch --array=1-$repeats --output=$pop_dir/logFiles/ngsadmix$k.$set_id.%A_%a.oe $scripts_dir/ngsadmix.sh $nt $k $beagle $pop_dir/ngsadmix $minind $set_id)
+	declare runid_$k=${jid##* }
 done
 
 ## Print likelihood values file
-LIKE_FILE=$POP_DIR/ngsadmix/likevalues.$SET_ID.txt # File for likelihoods summary
-rm $LIKE_FILE; touch $LIKE_FILE
-for K in $(seq 1 $CLUSTERS); 
+like_file=$pop_dir/ngsadmix/likevalues.$set_id.txt # File for likelihoods summary
+rm $like_file; touch $like_file
+for k in $(seq 1 $clusters); 
 do
-	for SEED in $(seq 1 $REPEATS)
+	for seed in $(seq 1 $repeats)
 	do
-		[[ $K == 1 ]] && [[ $SEED == 1 ]] && VARNAME=RUNID_$K && JID=$(sbatch --account=nib00015 --dependency=afterok:${!VARNAME} --output=$POP_DIR/logFiles/print_likes.$SET_ID.oe $SCRIPTS_DIR/print_likes.sh $POP_DIR/ngsadmix/$SET_ID.K$K.seed$SEED.log $LIKE_FILE)
-		[[ $K != 1 ]] || [[ $SEED != 1 ]] && VARNAME=RUNID_$K && JID=$(sbatch --account=nib00015 --dependency=afterok:${!VARNAME}:${JID##* } --output=$POP_DIR/logFiles/print_likes.$SET_ID.oe $SCRIPTS_DIR/print_likes.sh $POP_DIR/ngsadmix/$SET_ID.K$K.seed$SEED.log $LIKE_FILE)
+		[[ $k == 1 ]] && [[ $seed == 1 ]] && varname=runid_$k && jid=$(sbatch --account=nib00015 --dependency=afterok:${!varname} --output=$pop_dir/logFiles/print_likes.$set_id.oe $scripts_dir/best_likes.sh $pop_dir/ngsadmix/$set_id.K$k.seed$seed.log $like_file $k $seed)
+		[[ $k != 1 ]] || [[ $seed != 1 ]] && varname=runid_$k && jid=$(sbatch --account=nib00015 --dependency=afterok:${!varname}:${jid##* } --output=$pop_dir/logFiles/print_likes.$set_id.oe $scripts_dir/best_likes.sh $pop_dir/ngsadmix/$set_id.K$k.seed$seed.log $like_file $k $seed)
 	done
 done
 
 ## Plot results
-IND_FILE=$POP_DIR/$SET_ID.txt # File with individual IDs in first columns and population assignments in second column
+ind_file=$pop_dir/$set_id.txt # File with individual IDs in first columns and population assignments in second column
 
-until [[ $(cat $LIKE_FILE | wc -l) == $(( $CLUSTERS*$REPEATS )) ]]
+until [[ $(cat $like_file | wc -l) == $(( $clusters*$repeats )) ]]
 do
 	sleep 5
 done
 
-sbatch --account=nib00015 --output=$POP_DIR/logFiles/plot_ngsadmix.$SET_ID.oe $SCRIPTS_DIR/plot_ngsadmix.sh $SCRIPTS_DIR $POP_DIR/ngsadmix $LIKE_FILE $IND_FILE $SET_ID
+sbatch --account=nib00015 --output=$pop_dir/logFiles/plot_ngsadmix.$set_id.oe $scripts_dir/plot_ngsadmix.sh $scripts_dir $pop_dir/ngsadmix $like_file $ind_file $set_id
 
 #################################################################
 #### 3 ISOLATION-BY-DISTANCE ####
@@ -69,91 +69,91 @@ sbatch --account=nib00015 --output=$POP_DIR/logFiles/plot_ngsadmix.$SET_ID.oe $S
 ##################################################
 #### 3.1 BASED ON F_ST ####
 ##################################################
-mkdir -p $POP_DIR/ibd/fst
+mkdir -p $pop_dir/ibd/fst
 
-COMB_FILE=$PWORK/$SET_ID/angsd/maf/combinations.txt # File with pairwise population comparisons estimated in genotype_likelihoods_sub.sh
+comb_file=$PWORK/$set_id/angsd/maf/combinations.txt # File with pairwise population comparisons estimated in genotype_likelihoods_sub.sh
 
 ## Initialize summary file
-echo "pair unweighted weighted" > $POP_DIR/ibd/fst/$SET_ID.fst_sumstats.txt
+echo "pair unweighted weighted" > $pop_dir/ibd/fst/$set_id.fst_sumstats.txt
 
 ## Get pairwise F_ST between populations
-while read COMB
+while read comb
 do
-	FIRST=$(awk '{print $1}' <<< $COMB)
-	SECOND=$(awk '{print $2}' <<< $COMB)
+	first=$(awk '{print $1}' <<< $comb)
+	second=$(awk '{print $2}' <<< $comb)
 	
-	echo -e "#### Processing combination $FIRST $SECOND ...\n"	
+	echo -e "#### Processing combination $first $second ...\n"	
 	# Estimate F_ST values
-	OUT=$POP_DIR/ibd/fst/$SET_ID.$FIRST.$SECOND
-	sbatch --wait --account=nib00015 --output=$POP_DIR/logFiles/$SET_ID.realsfs_fst.$FIRST.$SECOND.oe $SCRIPTS_DIR/realsfs_fst.sh $NT "$PWORK/$SET_ID/angsd/saf.$FIRST.idx $PWORK/$SET_ID/angsd/saf.$SECOND.idx" $OUT
+	out=$pop_dir/ibd/fst/$set_id.$first.$second
+	sbatch --wait --account=nib00015 --output=$pop_dir/logFiles/$set_id.realsfs_fst.$first.$second.oe $scripts_dir/realsfs_fst.sh $nt "$PWORK/$set_id/angsd/saf.$first.idx $PWORK/$set_id/angsd/saf.$second.idx" $out
 	
 	# Write to summary file 
-	echo ${FIRST}_$SECOND $(realSFS fst stats $OUT.fst.idx) >> $POP_DIR/ibd/fst/$SET_ID.fst_sumstats.txt
-done < $COMB_FILE
+	echo ${first}_$second $(realSFS fst stats $out.fst.idx) >> $pop_dir/ibd/fst/$set_id.fst_sumstats.txt
+done < $comb_file
 
 ## Conduct Mantel tests and plot IBD
-GEO_DIST=$POP_DIR/ibd/geo_dist.txt # Distance matrix with mean geographic distances between population pairs as estimated with Geographic Distance Matrix Generator v1.2.3 (https://biodiversityinformatics.amnh.org/open_source/gdmg/), with row and column names
-GEN_DIST=$POP_DIR/ibd/fst/gen_dist.txt # Distance matrix with weighted pairwise F_ST between populations as estimated with realSFS, with row and column names
-sbatch --account=nib00015 --output=$POP_DIR/logFiles/$SET_ID.ibd.fst.oe $SCRIPTS_DIR/ibd.sh $GEO_DIST $GEN_DIST "_fst" $POP_DIR/ibd/fst/$SET_IT
+geo_dist=$pop_dir/ibd/geo_dist.txt # Distance matrix with mean geographic distances between population pairs as estimated with Geographic Distance Matrix Generator v1.2.3 (https://biodiversityinformatics.amnh.org/open_source/gdmg/), with row and column names
+gen_dist=$pop_dir/ibd/fst/gen_dist.txt # Distance matrix with weighted pairwise F_ST between populations as estimated with realSFS, with row and column names
+sbatch --account=nib00015 --output=$pop_dir/logFiles/$set_id.ibd.fst.oe $scripts_dir/ibd.sh $geo_dist $gen_dist "_fst" $pop_dir/ibd/fst/$set_id
 
 ##################################################
 #### 3.1 BASED ON GENETIC DISTANCES ####
 ##################################################
-mkdir -p $POP_DIR/ibd/geneticDistances
+mkdir -p $pop_dir/ibd/geneticDistances
 
-VCF_FILE=$PWORK/$SET_ID/vcf/$SET_ID.allScaffolds.snps.07filt.vcf
+vcf_file=$PWORK/$set_id/vcf/$set_id.allScaffolds.snps.07filt.vcf
 ## Estimate genetic distance between individuals
-sbatch --wait --account=nib00015 --output=$POP_DIR/logFiles/$SET_ID.vcfr.oe $SCRIPTS_DIR/vcfr.sh $SCRIPTS_DIR $VCF_FILE $POP_DIR/ibd/geneticDistances/geneticDistances.csv
+sbatch --wait --account=nib00015 --output=$pop_dir/logFiles/$set_id.vcfr.oe $scripts_dir/vcfr.sh $scripts_dir $vcf_file $pop_dir/ibd/geneticDistances/geneticDistances.csv
 
 ## Conduct Mantel tests and plot IBD
-GEO_DIST=$POP_DIR/ibd/geo_dist.txt # Distance matrix with mean geographic distances between population pairs as estimated with Geographic Distance Matrix Generator v1.2.3 (https://biodiversityinformatics.amnh.org/open_source/gdmg/), with row and column names
-GEN_DIST=$POP_DIR/ibd/geneticDistances/gen_dist.txt # Distance matrix with mean genetic distances between populations as estimated with vcfR, with row and column names
-GEN_DIST_SD=$POP_DIR/ibd/geneticDistances/gen_dist_sd.txt # Distance matrix with standard deviations of mean genetic distances between populations as estimated with vcfR, with row and column names
-sbatch --account=nib00015 --output=$POP_DIR/logFiles/$SET_ID.ibd.geneticDistances.oe $SCRIPTS_DIR/ibd.sh $GEO_DIST $GEN_DIST "_geneticDistances" $POP_DIR/ibd/geneticDistances/$SET_IT $GEN_DIST_SD
+geo_dist=$pop_dir/ibd/geo_dist.txt # Distance matrix with mean geographic distances between population pairs as estimated with Geographic Distance Matrix Generator v1.2.3 (https://biodiversityinformatics.amnh.org/open_source/gdmg/), with row and column names
+gen_dist=$pop_dir/ibd/geneticDistances/gen_dist.txt # Distance matrix with mean genetic distances between populations as estimated with vcfR, with row and column names
+gen_dist_sd=$pop_dir/ibd/geneticDistances/gen_dist_sd.txt # Distance matrix with standard deviations of mean genetic distances between populations as estimated with vcfR, with row and column names
+sbatch --account=nib00015 --output=$pop_dir/logFiles/$set_id.ibd.geneticDistances.oe $scripts_dir/ibd.sh $geo_dist $gen_dist "_geneticDistances" $pop_dir/ibd/geneticDistances/$set_id $gen_dist_sd
 
 
 #################################################################
 #### 4 ESTIMATED EFFECTIVE MIGRATION SURFACES (EEMS) ####
 #################################################################
-mkdir -p $POP_DIR/eems/results
+mkdir -p $pop_dir/eems/results
 
-VCF_FILE=$PWORK/$SET_ID/vcf/$SET_ID.allScaffolds.snps.07filt.vcf
+vcf_file=$PWORK/$set_id/vcf/$set_id.allScaffolds.snps.07filt.vcf
 
 ## Estimate average genetic dissimilarity matrix
-NT=4
-CHROM_FILE=$POP_DIR/eems/renameChromosomes.txt # File with chromosome names in first column and integers in second column (no header), which is required for formating of VCF file
-sbatch --wait --account=nib00015 --output=$POP_DIR/logFiles/$SET_ID.bed2diffs.oe $SCRIPTS_DIR/bed2diffs.sh $NT $POP_DIR/eems $VCF_FILE $CHROM_FILE
+nt=4
+chrom_file=$pop_dir/eems/renameChromosomes.txt # File with chromosome names in first column and integers in second column (no header), which is required for formating of VCF file
+sbatch --wait --account=nib00015 --output=$pop_dir/logFiles/$set_id.bed2diffs.oe $scripts_dir/bed2diffs.sh $nt $pop_dir/eems $vcf_file $chrom_file
 
 ## Two files need to be created manually:
-# $POP_DIR/eems/$(basename $VCF_FILE .vcf).coord which contains coordinates of each indivdidual
-# $POP_DIR/eems/$(basename $VCF_FILE .vcf).outer which contains coordinate boundaries of focal area
+# $pop_dir/eems/$(basename $vcf_file .vcf).coord which contains coordinates of each indivdidual
+# $pop_dir/eems/$(basename $vcf_file .vcf).outer which contains coordinate boundaries of focal area
 
 ## Create configuration file
-for NDEMES in 200 500 1000
+for ndemes in 200 500 1000
 do
-	> $POP_DIR/eems/$(basename $VCF_FILE .vcf).ndemes$NDEMES.ini
-	echo "datapath = $POP_DIR/eems/$(basename $VCF_FILE .vcf)" >> $POP_DIR/eems/$(basename $VCF_FILE .vcf).ndemes$NDEMES.ini
-	echo "mcmcpath = $POP_DIR/eems/results/$(basename $VCF_FILE .vcf).ndemes$NDEMES" >> $POP_DIR/eems/$(basename $VCF_FILE .vcf).ndemes$NDEMES.ini
-	echo "nIndiv = $(bcftools query -l $VCF_FILE | wc -l)" >> $POP_DIR/eems/$(basename $VCF_FILE .vcf).ndemes$NDEMES.ini
-	echo "nSites = $(egrep -v "#" $VCF_FILE | wc -l)" >> $POP_DIR/eems/$(basename $VCF_FILE .vcf).ndemes$NDEMES.ini
-	echo "nDemes = $NDEMES" >> $POP_DIR/eems/$(basename $VCF_FILE .vcf).ndemes$NDEMES.ini
-	echo "diploid = true" >> $POP_DIR/eems/$(basename $VCF_FILE .vcf).ndemes$NDEMES.ini
-	echo "numMCMCIter = 4000000" >> $POP_DIR/eems/$(basename $VCF_FILE .vcf).ndemes$NDEMES.ini
-	echo "numBurnIter = 1000000" >> $POP_DIR/eems/$(basename $VCF_FILE .vcf).ndemes$NDEMES.ini
-	echo "numThinIter = 9999" >> $POP_DIR/eems/$(basename $VCF_FILE .vcf).ndemes$NDEMES.ini
+	> $pop_dir/eems/$(basename $vcf_file .vcf).ndemes$ndemes.ini
+	echo "datapath = $pop_dir/eems/$(basename $vcf_file .vcf)" >> $pop_dir/eems/$(basename $vcf_file .vcf).ndemes$ndemes.ini
+	echo "mcmcpath = $pop_dir/eems/results/$(basename $vcf_file .vcf).ndemes$ndemes" >> $pop_dir/eems/$(basename $vcf_file .vcf).ndemes$ndemes.ini
+	echo "nIndiv = $(bcftools query -l $vcf_file | wc -l)" >> $pop_dir/eems/$(basename $vcf_file .vcf).ndemes$ndemes.ini
+	echo "nSites = $(egrep -v "#" $vcf_file | wc -l)" >> $pop_dir/eems/$(basename $vcf_file .vcf).ndemes$ndemes.ini
+	echo "nDemes = $ndemes" >> $pop_dir/eems/$(basename $vcf_file .vcf).ndemes$ndemes.ini
+	echo "diploid = true" >> $pop_dir/eems/$(basename $vcf_file .vcf).ndemes$ndemes.ini
+	echo "numMCMCIter = 4000000" >> $pop_dir/eems/$(basename $vcf_file .vcf).ndemes$ndemes.ini
+	echo "numBurnIter = 1000000" >> $pop_dir/eems/$(basename $vcf_file .vcf).ndemes$ndemes.ini
+	echo "numThinIter = 9999" >> $pop_dir/eems/$(basename $vcf_file .vcf).ndemes$ndemes.ini
 done
 
 ## Estimate effective migration surfaces and plot
-SEED=123
-POP_COORDS=$POP_DIR/eems/results/$(basename $VCF_FILE .vcf).ndemes$NDEMES/pop_coords.txt # File with coordinates to plot populations on EEMS
-SHAPE=$POP_DIR/eems/results/$(basename $VCF_FILE .vcf).ndemes$NDEMES/River_Mada_1 # Prefix of river shape file
-for NDEMES in 200 500 1000
+seed=123
+pop_coords=$pop_dir/eems/results/$(basename $vcf_file .vcf).ndemes$ndemes/pop_coords.txt # File with coordinates to plot populations on EEMS
+shape_file=$pop_dir/eems/results/$(basename $vcf_file .vcf).ndemes$ndemes/River_Mada_1 # Prefix of river shape file
+for ndemes in 200 500 1000
 do
 	# Infer EEMS
-	JID=$(sbatch --account=nib00015 --output=$POP_DIR/logFiles/eems.nDemes$NDEMES.oe $SCRIPTS_DIR/eems.sh $POP_DIR/eems/$(basename $VCF_FILE .vcf).ndemes$NDEMES.ini $SEED)
+	jid=$(sbatch --account=nib00015 --output=$pop_dir/logFiles/eems.nDemes$ndemes.oe $scripts_dir/eems.sh $pop_dir/eems/$(basename $vcf_file .vcf).ndemes$ndemes.ini $seed)
 	
 	# Plot results
-	sbatch --account=nib00015 --dependency=afterok:${JID##* } --output=$POP_DIR/logFiles/plot_eems.nDemes$NDEMES.oe plot_eems.sh $SCRIPTS_DIR $POP_DIR/eems/$(basename $VCF_FILE .vcf).ndemes$NDEMES $POP_DIR/eems/results/$(basename $VCF_FILE .vcf).ndemes$NDEMES $POP_COORDS $SHAPE_FILE
+	sbatch --account=nib00015 --dependency=afterok:${jid##* } --output=$pop_dir/logFiles/plot_eems.nDemes$ndemes.oe plot_eems.sh $scripts_dir $pop_dir/eems/$(basename $vcf_file .vcf).ndemes$ndemes $pop_dir/eems/results/$(basename $vcf_file .vcf).ndemes$ndemes $pop_coords $shape_file
 done
 
 

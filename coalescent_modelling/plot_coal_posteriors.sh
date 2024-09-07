@@ -8,41 +8,41 @@ set -euo pipefail
 ################################################################################
 
 ## Command-line args:
-SCRIPTS_DIR=$1
-MCMC_NM1=$2
-MCMC_NM2=$3
-MCMC_NM3=$4
-MCMC_NM4=$5
-MCMC_M1=$6
-MCMC_M2=$7
-MCMC_M3=$8
-MCMC_M4=$9
-M_SCALE=$10
-T_SCALE=$11
-OUT_DIR=$12
+scripts_dir=$1
+mcmc_nm1=$2
+mcmc_nm2=$3
+mcmc_nm3=$4
+mcmc_nm4=$5
+mcmc_m1=$6
+mcmc_m2=$7
+mcmc_m3=$8
+mcmc_m4=$9
+m_scale=$10
+t_scale=$11
+out_dir=$12
 
 ## Report:
 echo -e "\n\n###################################################################"
 date
 echo -e "#### plot_coal_posteriors.sh: Starting script."
-echo -e "#### plot_coal_posteriors.sh: Directory with scripts: $SCRIPTS_DIR"
-echo -e "#### plot_coal_posteriors.sh: First MCMC (no migration): $MCMC_NM1"
-echo -e "#### plot_coal_posteriors.sh: Second MCMC (no migration): $MCMC_NM2"
-echo -e "#### plot_coal_posteriors.sh: Third MCMC (no migration): $MCMC_NM3"
-echo -e "#### plot_coal_posteriors.sh: Fourth MCMC (no migration): $MCMC_NM4"
-echo -e "#### plot_coal_posteriors.sh: First MCMC (migration): $MCMC_M1"
-echo -e "#### plot_coal_posteriors.sh: First MCMC (migration): $MCMC_M2"
-echo -e "#### plot_coal_posteriors.sh: First MCMC (migration): $MCMC_M3"
-echo -e "#### plot_coal_posteriors.sh: First MCMC (migration): $MCMC_M4"
-echo -e "#### plot_coal_posteriors.sh: Inverse scaling factor used in the G-PhoCS configuration file for migration parameter: $M_SCALE"
-echo -e "#### plot_coal_posteriors.sh: Inverse scaling factor used in the G-PhoCS configuration file for tau and theta: $T_SCALE"
-echo -e "#### plot_coal_posteriors.sh: Output directory: $OUT_DIR \n\n"
+echo -e "#### plot_coal_posteriors.sh: Directory with scripts: $scripts_dir"
+echo -e "#### plot_coal_posteriors.sh: First MCMC (no migration): $mcmc_nm1"
+echo -e "#### plot_coal_posteriors.sh: Second MCMC (no migration): $mcmc_nm2"
+echo -e "#### plot_coal_posteriors.sh: Third MCMC (no migration): $mcmc_nm3"
+echo -e "#### plot_coal_posteriors.sh: Fourth MCMC (no migration): $mcmc_nm4"
+echo -e "#### plot_coal_posteriors.sh: First MCMC (migration): $mcmc_m1"
+echo -e "#### plot_coal_posteriors.sh: Second MCMC (migration): $mcmc_m2"
+echo -e "#### plot_coal_posteriors.sh: Third MCMC (migration): $mcmc_m3"
+echo -e "#### plot_coal_posteriors.sh: Fourth MCMC (migration): $mcmc_m4"
+echo -e "#### plot_coal_posteriors.sh: Inverse scaling factor used in the G-PhoCS configuration file for migration parameter: $m_scale"
+echo -e "#### plot_coal_posteriors.sh: Inverse scaling factor used in the G-PhoCS configuration file for tau and theta: $t_scale"
+echo -e "#### plot_coal_posteriors.sh: Output directory: $out_dir \n\n"
 
 ################################################################################
 #### PLOT POSTERIORS ####
 ################################################################################
 echo -e "#### plot_coal_posteriors.sh: Plotting posteriors ..."
-Rscript $SCRIPTS_DIR/plot_coal_posteriors.R $MCMC_NM1 $MCMC_NM2 $MCMC_NM3 $MCMC_NM4 $MCMC_M1 $MCMC_M2 $MCMC_M3 $MCMC_M4 $M_SCALE $T_SCALE $OUT_DIR
+Rscript $scripts_dir/plot_coal_posteriors.R $mcmc_nm1 $mcmc_nm2 $mcmc_nm3 $mcmc_nm4 $mcmc_m1 $mcmc_m2 $mcmc_m3 $mcmc_m4 $m_scale $t_scale $out_dir
 
 ## Report:
 echo -e "\n#### plot_coal_posteriors.sh: Done with script."

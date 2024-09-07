@@ -12,36 +12,36 @@ set -euo pipefail
 # BEDtools needs to be included in $PATH (v2.30.0; https://bedtools.readthedocs.io/en/latest/)
 
 ## Command-line args:
-LOCUSBED_INTERMED=$1
-LOCUSBED_FINAL=$2
-VCF_HIGHDEPTH=$3
-VCF_FILT_INTERSECT=$4
+locusbed_intermed=$1
+locusbed_final=$2
+vcf_highdepth=$3
+vcf_filt_intersect=$4
 
 ## Report:
 echo -e "\n\n###################################################################"
 date
 echo -e "#### 03b_intersect.sh: Starting script."
-echo -e "#### 03b_intersect.sh: Intermediate locus BED file: $LOCUSBED_INTERMED"
-echo -e "#### 03b_intersect.sh: Final locus BED file: $LOCUSBED_FINAL"
-echo -e "#### 03b_intersect.sh: VCF file with loci with too high depth: $VCF_HIGHDEPTH"
-echo -e "#### 03b_intersect.sh: Fully filtered VCF file: $VCF_FILT_INTERSECT \n\n"
+echo -e "#### 03b_intersect.sh: Intermediate locus BED file: $locusbed_intermed"
+echo -e "#### 03b_intersect.sh: Final locus BED file: $locusbed_final"
+echo -e "#### 03b_intersect.sh: VCF file with loci with too high depth: $vcf_highdepth"
+echo -e "#### 03b_intersect.sh: Fully filtered VCF file: $vcf_filt_intersect \n\n"
 
 ################################################################################
 #### INTERSECT BED FILE WITH LOCI WITH TOO HIGH DEPTH ####
 ################################################################################
 echo -e "#### 03b_intersect.sh: Intersecting BED file with loci with too high depth ..."
-bedtools intersect -v -a $LOCUSBED_INTERMED -b $VCF_HIGHDEPTH > $LOCUSBED_FINAL
+bedtools intersect -v -a $locusbed_intermed -b $vcf_highdepth > $locusbed_final
 
 ## Report:
-echo -e "#### 03b_intersect.sh: Number of loci after removing SNPs with too high depth: $(wc -l < $LOCUSBED_FINAL)"
+echo -e "#### 03b_intersect.sh: Number of loci after removing SNPs with too high depth: $(wc -l < $locusbed_final)"
 
-SNPS_IN_LOCI=$(bedtools intersect -u -a $VCF_FILT_INTERSECT -b $LOCUSBED_FINAL | grep -cv "##")
-SNPS_IN_VCF=$(grep -cv "##" $VCF_FILT_INTERSECT)
-SNPS_LOST=$(( $SNPS_IN_VCF - $SNPS_IN_LOCI ))
+snps_in_loci=$(bedtools intersect -u -a $vcf_filt_intersect -b $locusbed_final | grep -cv "##")
+snps_in_vcf=$(grep -cv "##" $vcf_filt_intersect)
+snps_lost=$(( $snps_in_vcf - $snps_in_loci ))
 
-echo -e "#### 03b_intersect.sh: Number of SNPs in VCF: $SNPS_IN_VCF"
-echo -e "#### 03b_intersect.sh: Number of SNPs in loci: $SNPS_IN_LOCI"
-echo -e "#### 03b_intersect.sh: Number of lost SNPs (in VCF but not in loci): $SNPS_LOST"
+echo -e "#### 03b_intersect.sh: Number of SNPs in VCF: $snps_in_vcf"
+echo -e "#### 03b_intersect.sh: Number of SNPs in loci: $snps_in_loci"
+echo -e "#### 03b_intersect.sh: Number of lost SNPs (in VCF but not in loci): $snps_lost"
 
 echo -e "\n#### 03b_intersect.sh: Done with script."
 date

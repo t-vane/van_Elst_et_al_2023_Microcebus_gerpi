@@ -1,57 +1,57 @@
 ################################################################################
 #### GENOTYPE LIKELIHOOD INFERENCE ####
 ################################################################################
-SCRIPTS_DIR=/home/nibtve93/scripts/genotypeLikelihoods
+scripts_dir=/home/nibtve93/scripts/genotypeLikelihoods
 
-SET_ID=gerpi
-BAM_DIR=$PWORK/bamFiles/$SET_ID
-REFERENCE_DIR=$PWORK/mmur3
-REFERENCE=$REFERENCE_DIR/GCF_000165445.2_Mmur_3.0_genomic.fna # Reference genome in fasta format
-ANGSD_DIR=$PWORK/$SET_ID/angsd
-NT=80
+set_id=gerpi
+bam_dir=$PWORK/bamFiles/$set_id
+reference_dir=$PWORK/mmur3
+reference=$reference_dir/GCF_000165445.2_Mmur_3.0_genomic.fna # Reference genome in fasta format
+angsd_dir=$PWORK/$set_id/angsd
+nt=80
 
-mkdir -p $ANGSD_DIR/logFiles
+mkdir -p $angsd_dir/logFiles
 
 #################################################################
 #### 1 ESTIMATE GENOTYPE LIKELIHOODS ACROSS ALL SAMPLES ####
 #################################################################
-IN_FILE_ALL=$ANGSD_DIR/angsd_all.txt # List of samples (without file extensions) that shall be included for global genotype likelihood estimation
-NO_INDS_ALL=$(cat $IN_FILE_ALL | wc -l)
+in_file_all=$angsd_dir/angsd_all.txt # List of samples (without file extensions) that shall be included for global genotype likelihood estimation
+no_inds_all=$(cat $in_file_all | wc -l)
 
-mkdir -p $ANGSD_DIR/bamHits
+mkdir -p $angsd_dir/bamHits
 
 ## Create bamHits file with locus coverages for each individual
-for i in PE SE
+for i in pe se
 do
-	IN_FILE=$ANGSD_DIR/angsd_$i.txt # List of samples (without file extensions) that shall be included for global genotype likelihood estimation, separated by sequencing mode (PE or SE)
-	NO_INDS=$(cat $IN_FILE | wc -l)
+	in_file=$angsd_dir/angsd_$i.txt # List of samples (without file extensions) that shall be included for global genotype likelihood estimation, separated by sequencing mode (PE or SE)
+	no_inds=$(cat $in_file | wc -l)
 
-	[[ $i == PE ]] && sbatch --wait --account=nib00015 --array=1-$NO_INDS --output=$ANGSD_DIR/logFiles/bamHits.$SET_ID.%A_%a.oe $SCRIPTS_DIR/coverage.sh $i $IN_FILE $BAM_DIR $ANGSD_DIR/bamHits
-	[[ $i == SE ]] && sbatch --wait --account=nib00015 --array=1-$NO_INDS --output=$ANGSD_DIR/logFiles/bamHits.$SET_ID.%A_%a.oe $SCRIPTS_DIR/coverage.sh $i $IN_FILE $BAM_DIR $ANGSD_DIR/bamHits
+	[[ $i == pe ]] && sbatch --wait --account=nib00015 --array=1-$no_inds --output=$angsd_dir/logFiles/bamHits.$set_id.%A_%a.oe $scripts_dir/coverage.sh $i $in_file $bam_dir $angsd_dir/bamHits
+	[[ $i == se ]] && sbatch --wait --account=nib00015 --array=1-$no_inds --output=$angsd_dir/logFiles/bamHits.$set_id.%A_%a.oe $scripts_dir/coverage.sh $i $in_file $bam_dir $angsd_dir/bamHits
 done
 
 ## Estimate and plot coverage distributions for each individual
-sbatch --wait --account=nib00015 --output=$ANGSD_DIR/logFiles/cov_plot.$SET_ID.oe $SCRIPTS_DIR/cov_plot.sh $SCRIPTS_DIR $IN_FILE_ALL $ANGSD_DIR/bamHits $SET_ID
+sbatch --wait --account=nib00015 --output=$angsd_dir/logFiles/cov_plot.$set_id.oe $scripts_dir/cov_plot.sh $scripts_dir $in_file_all $angsd_dir/bamHits $set_id
 
 ## Set thresholds for angsd
-MINDEPTHIND=$(cat $ANGSD_DIR/bamHits/statistics/$SET_ID.minmax.txt | cut -d " " -f2 | sort -n | head -1) # Minimum depth per individual
-MAXDEPTHIND=$(cat $ANGSD_DIR/bamHits/statistics/$SET_ID.minmax.txt | cut -d " " -f3 | sort -n | tail -1) # Maximum depth per individual
-GMIN=$(cat $ANGSD_DIR/bamHits/statistics/$SET_ID.minmax.txt | cut -d " " -f2 | paste -sd+ | bc) # Minimum depth across all individuals
-GMAX=$(cat $ANGSD_DIR/bamHits/statistics/$SET_ID.minmax.txt | cut -d " " -f3 | paste -sd+ | bc) # Maximum depth across all individuals
-PERCENTAGE="75/100" # Minimum percentage of represented individuals
-MININD=$(($NO_INDS_ALL * $PERCENTAGE )) # Minimum number of represented individuals
+mindepthind=$(cat $angsd_dir/bamHits/statistics/$set_id.minmax.txt | cut -d " " -f2 | sort -n | head -1) # Minimum depth per individual
+maxdepthind=$(cat $angsd_dir/bamHits/statistics/$set_id.minmax.txt | cut -d " " -f3 | sort -n | tail -1) # Maximum depth per individual
+gmin=$(cat $angsd_dir/bamHits/statistics/$set_id.minmax.txt | cut -d " " -f2 | paste -sd+ | bc) # Minimum depth across all individuals
+gmax=$(cat $angsd_dir/bamHits/statistics/$set_id.minmax.txt | cut -d " " -f3 | paste -sd+ | bc) # Maximum depth across all individuals
+percentage="75/100" # Minimum percentage of represented individuals
+minind=$(($no_inds_all * $percentage )) # Minimum number of represented individuals
 
 ## Create BAM list as input to angsd
-rm $ANGSD_DIR/$SET_ID.bamlist
-while read INDV
+rm $angsd_dir/$set_id.bamlist
+while read indv
 do
-echo $BAM_DIR/$INDV.auto.bam >> $ANGSD_DIR/$SET_ID.bamlist
-done < $IN_FILE_ALL
+echo $bam_dir/$indv.auto.bam >> $angsd_dir/$set_id.bamlist
+done < $in_file_all
 
 ## Run angsd
-FILTERS="-setMinDepth $GMIN -setMaxDepth $GMAX -setMaxDepthInd $MAXDEPTHIND -setMinDepthInd $MINDEPTHIND -minInd $MININD -SNP_pval 1e-5 -minQ 20 -minMapQ 20 -minMaf 0.05 -uniqueOnly 1 -remove_bads 1 -skipTriallelic 1 -only_proper_pairs 1 -baq 1 -C 50"
-TODO="-GL 1 -doGlf 2 -doMaf 1 -doMajorMinor 1 -doCounts 1"
-sbatch --wait --account=nib00015 --output=$ANGSD_DIR/logFiles/angsd.$SET_ID.oe $SCRIPTS_DIR/angsd.sh $NT $REFERENCE $ANGSD_DIR/$SET_ID.bamlist "$TODO" "$FILTERS" $ANGSD_DIR/$SET_ID
+filters="-setMinDepth $gmin -setMaxDepth $gmax -setMaxDepthInd $maxdepthind -setMinDepthInd $mindepthind -minInd $minind -SNP_pval 1e-5 -minQ 20 -minMapQ 20 -minMaf 0.05 -uniqueOnly 1 -remove_bads 1 -skipTriallelic 1 -only_proper_pairs 1 -baq 1 -C 50"
+todo="-GL 1 -doGlf 2 -doMaf 1 -doMajorMinor 1 -doCounts 1"
+sbatch --wait --account=nib00015 --output=$angsd_dir/logFiles/angsd.$set_id.oe $scripts_dir/angsd.sh $nt $reference $angsd_dir/$set_id.bamlist "$todo" "$filters" $angsd_dir/$set_id
 
 #################################################################
 #### 2 ESTIMATE JOINT MINOR ALLELE FREQUENCY (MAF) SPECTRA ####
@@ -60,59 +60,59 @@ sbatch --wait --account=nib00015 --output=$ANGSD_DIR/logFiles/angsd.$SET_ID.oe $
 ##################################################
 #### 2.1 ESTIMATE SITE ALLELE FREQUENCY LIKELIHOODS PER POPULATION ####
 ##################################################
-POPS="andobo ambodisakoana anjahamana sahamamy vohiposa sahafina antanambao mjollyae mmarohita"
+pops="andobo ambodisakoana anjahamana sahamamy vohiposa sahafina antanambao mjollyae mmarohita"
 
 ## Estimate site allele frequency likelihoods per population
-for i in $POPS
+for i in $pops
 do
 	echo -e "#### Processing population $i ...\n"
-	IN_FILE=$ANGSD_DIR/angsd_$i.txt # List of samples in the population
-	NO_INDS=$(cat $IN_FILE | wc -l)
+	in_file=$angsd_dir/angsd_$i.txt # List of samples in the population
+	no_inds=$(cat $in_file | wc -l)
 
 	## Estimate and plot coverage distributions for each individual
-	sbatch --wait --output=$ANGSD_DIR/logFiles/cov_plot.$i.oe $SCRIPTS_DIR/cov_plot.sh $SCRIPTS_DIR $IN_FILE $ANGSD_DIR/bamHits $i
+	sbatch --wait --output=$angsd_dir/logFiles/cov_plot.$i.oe $scripts_dir/cov_plot.sh $scripts_dir $in_file $angsd_dir/bamHits $i
 
 	## Set thresholds for angsd
-	MINDEPTHIND=$(cat $ANGSD_DIR/bamHits/statistics/$i.minmax.txt | cut -d " " -f2 | sort -n | head -1) # Minimum depth per individual
-	MAXDEPTHIND=$(cat $ANGSD_DIR/bamHits/statistics/$i.minmax.txt | cut -d " " -f3 | sort -n | tail -1) # Maximum depth per individual
-	GMIN=$(cat $ANGSD_DIR/bamHits/statistics/$i.minmax.txt | cut -d " " -f2 | paste -sd+ | bc) # Minimum depth across all individuals
-	GMAX=$(cat $ANGSD_DIR/bamHits/statistics/$i.minmax.txt | cut -d " " -f3 | paste -sd+ | bc) # Maximum depth across all individuals
-	PERCENTAGE="75/100" # Minimum percentage of represented individuals
-	MININD=$(($NO_INDS * $PERCENTAGE )) # Minimum number of represented individuals
+	mindepthind=$(cat $angsd_dir/bamHits/statistics/$i.minmax.txt | cut -d " " -f2 | sort -n | head -1) # Minimum depth per individual
+	maxdepthind=$(cat $angsd_dir/bamHits/statistics/$i.minmax.txt | cut -d " " -f3 | sort -n | tail -1) # Maximum depth per individual
+	gmin=$(cat $angsd_dir/bamHits/statistics/$i.minmax.txt | cut -d " " -f2 | paste -sd+ | bc) # Minimum depth across all individuals
+	gmax=$(cat $angsd_dir/bamHits/statistics/$i.minmax.txt | cut -d " " -f3 | paste -sd+ | bc) # Maximum depth across all individuals
+	percentage="75/100" # Minimum percentage of represented individuals
+	minind=$(( $no_inds * $percentage )) # Minimum number of represented individuals
 
 	## Create BAM list as input to angsd
-	rm $ANGSD_DIR/$i.bamlist
-	while read INDV
+	rm $angsd_dir/$i.bamlist
+	while read indv
 	do
-	echo $BAM_DIR/$INDV.auto.bam >> $ANGSD_DIR/$i.bamlist
-	done < $IN_FILE
+	echo $bam_dir/$indv.auto.bam >> $angsd_dir/$i.bamlist
+	done < $in_file
 
 	## Run angsd to estimate site allele frequency likelihoods
-	TODO="-GL 1 -doSaf 1 -doCounts 1 -anc $REFERENCE"
-	FILTERS="-setMinDepth $GMIN -setMaxDepth $GMAX -setMaxDepthInd $MAXDEPTHIND -setMinDepthInd $MINDEPTHIND -minInd $MININD -minMapQ 20 -minQ 20 -uniqueOnly 1 -remove_bads 1 -C 50 -baq 1 -only_proper_pairs 1"
-	sbatch --wait --account=nib00015 --output=$ANGSD_DIR/logFiles/angsd.saf.$i.oe $SCRIPTS_DIR/angsd.sh $NT $REFERENCE $ANGSD_DIR/$i.bamlist "$TODO" "$FILTERS" $ANGSD_DIR/$i
+	todo="-GL 1 -doSaf 1 -doCounts 1 -anc $reference"
+	filters="-setMinDepth $gmin -setMaxDepth $gmax -setMaxDepthInd $maxdepthind -setMinDepthInd $mindepthind -minInd $minind -minMapQ 20 -minQ 20 -uniqueOnly 1 -remove_bads 1 -C 50 -baq 1 -only_proper_pairs 1"
+	sbatch --wait --account=nib00015 --output=$angsd_dir/logFiles/angsd.saf.$i.oe $scripts_dir/angsd.sh $nt $reference $angsd_dir/$i.bamlist "$todo" "$filters" $angsd_dir/$i
 done
 
 ##################################################
 #### 2.2 OBTAIN JOINT MAF SPECTRA ####
 ##################################################
-POPS="andobo ambodisakoana anjahamana sahamamy vohiposa sahafina antanambao mjollyae mmarohita"
+pops="andobo ambodisakoana anjahamana sahamamy vohiposa sahafina antanambao mjollyae mmarohita"
 
-mkdir -p $ANGSD_DIR/maf
+mkdir -p $angsd_dir/maf
 
 ## Get pairwise population comparisons
-awk -f $SCRIPTS_DIR/combinations.awk <<< $POPS > $ANGSD_DIR/maf/combinations.txt
+awk -f $scripts_dir/combinations.awk <<< $pops > $angsd_dir/maf/combinations.txt
 
 ## Obtain joint MAF spectra
-NT=24
-while read COMB
+nt=24
+while read comb
 do
-	FIRST=$(awk '{print $1}' <<< $COMB)
-	SECOND=$(awk '{print $2}' <<< $COMB)
+	first=$(awk '{print $1}' <<< $comb)
+	second=$(awk '{print $2}' <<< $comb)
 
-	echo -e "#### Processing combination $FIRST $SECOND ...\n"
+	echo -e "#### Processing combination $first $second ...\n"
 	# Estimate joint minor allele frequency spectrum
-	OUT_FILE=$ANGSD_DIR/maf/$SET_ID.$FIRST.$SECOND.ml
-	sbatch --account=nib00015 --output=$ANGSD_DIR/logFiles/$SET_ID.realsfs.2d.$FIRST.$SECOND.oe $SCRIPTS_DIR/realsfs.sh $NT "$ANGSD_DIR/saf.$FIRST.idx $ANGSD_DIR/saf.$SECOND.idx" $OUT_FILE
-done < $ANGSD_DIR/maf/combinations.txt
+	out_file=$angsd_dir/maf/$set_id.$first.$second.ml
+	sbatch --account=nib00015 --output=$angsd_dir/logFiles/$set_id.realsfs.2d.$first.$second.oe $scripts_dir/realsfs.sh $nt "$angsd_dir/saf.$first.idx $angsd_dir/saf.$second.idx" $out_file
+done < $angsd_dir/maf/combinations.txt
 

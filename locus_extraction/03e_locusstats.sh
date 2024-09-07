@@ -9,42 +9,42 @@ set -euo pipefail
 ## Script adapted and modified from Poelstra et al. 2021, Systematic Biology (https://doi.org/10.1093/sysbio/syaa053)
 
 ## Software:
-AMAS=/home/nibtve93/software/AMAS/amas/AMAS.py # (https://github.com/marekborowiec/AMAS)
+amas=/home/nibtve93/software/AMAS/amas/AMAS.py # (https://github.com/marekborowiec/AMAS)
 
 ## Command-line args:
-FASTA_DIR=$1
-LOCUSSTATS=$2
+fasta_dir=$1
+locus_stats=$2
 
 ## Report:
 echo -e "\n\n###################################################################"
 date
 echo -e "#### 03e_locusstats.sh: Starting script."
-echo -e "#### 03e_locusstats.sh: Input directory with FASTA files: $FASTA_DIR"
-echo -e "#### 03e_locusstats.sh: Output file with statistics: $LOCUSTATS \n\n"
+echo -e "#### 03e_locusstats.sh: Input directory with FASTA files: $fasta_dir"
+echo -e "#### 03e_locusstats.sh: Output file with statistics: $locus_stats \n\n"
 
 ################################################################################
 #### ESTIMATE STATISTICS FOR ALL LOCI  ####
 ################################################################################
 echo -e "\n#### 03e_locusstats.sh: Estimate statistics for each locus ..."
-for FASTA in $FASTA_DIR/*
+for fasta in $fasta_dir/*
 do
-    echo -e "\n## 03e_locusstats.sh: Processing $FASTA ..."
-    FASTA_ID=$(basename $FASTA)
-    FILE_STATS=$(dirname $LOCUSSTATS)/tmp.$FASTA_ID.stats.txt
+    echo -e "\n## 03e_locusstats.sh: Processing $fasta ..."
+    fasta_id=$(basename $fasta)
+    file_stats=$(dirname $locusstats)/tmp.$fasta_id.stats.txt
 
-    python3 $AMAS summary -f fasta -d dna -i $FASTA -o $FILE_STATS
+    python3 $amas summary -f fasta -d dna -i $fasta -o $file_stats
 
-    grep -v "Alignment_name" $FILE_STATS >> $LOCUSSTATS
+    grep -v "Alignment_name" $file_stats >> $locus_stats
 done
 
 ## Add header
 echo -e "\n#### 03e_locusstats.sh: Adding header line ..."
-HEADER=$(head -n 1 $FILE_STATS)
-(echo $HEADER && cat $LOCUSSTATS) > $(dirname $LOCUSSTATS)/tmp.txt && mv $(dirname $LOCUSSTATS)/tmp.txt $LOCUSSTATS
+header=$(head -n 1 $file_stats)
+(echo $header && cat $locus_stats) > $(dirname $locusstats)/tmp.txt && mv $(dirname $locusstats)/tmp.txt $locus_stats
 
 ## Remove temporary files
 echo -e "\n#### 03e_locusstats.sh: Removing temporary files ..."
-find $(dirname $LOCUSSTATS) -name 'tmp*txt' -delete
+find $(dirname $locus_stats) -name 'tmp*txt' -delete
 
 ## Report:
 echo -e "\n#### 03e_locusstats.sh: Done with script."

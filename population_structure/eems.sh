@@ -8,21 +8,21 @@ set -euo pipefail
 ################################################################################
 
 ## Command-line args
-CONFIG=$1
-SEED=$2
+config=$1
+seed=$2
 
 ## Report:
 echo -e "\n\n###################################################################"
 date
 echo -e "#### eems.sh: Starting script."
-echo -e "#### eems.sh: Configuration file: $CONFIG"
-echo -e "#### eems.sh: Seed: $SEED \n\n"
+echo -e "#### eems.sh: Configuration file: $config"
+echo -e "#### eems.sh: Seed: $seed \n\n"
 
 ################################################################################
 #### ESTIMATE EFFECTIVE MIGRATION SURFACE ####
 ################################################################################
 echo -e "#### eems.sh: Estimating effective migration surface ...\n"
-runeems_snps --params $CONFIG --seed=$SEED
+runeems_snps --params $config --seed=$seed
 
 ## Report:
 echo -e "\n#### eems.sh: Done with script."

@@ -7,35 +7,35 @@ set -euo pipefail
 #### SET-UP ####
 ################################################################################
 ## Software:
-AMAS=/home/nibtve93/software/AMAS/amas/AMAS.py # (https://github.com/marekborowiec/AMAS)
+amas=/home/nibtve93/software/AMAS/amas/AMAS.py # (https://github.com/marekborowiec/AMAS)
 
 ## Command-line args:
-NT=$1
-ALIGNMENT_DIR=$2
-SET_ID=$3
+nt=$1
+alignment_dir=$2
+set_id=$3
 
 ## Report:
 echo -e "\n\n###################################################################"
 date
 echo -e "#### concatenate.sh: Starting script."
-echo -e "#### concatenate.sh: Number of threads: $NT"
-echo -e "#### concatenate.sh: Alignment directory: $ALIGNMENT_DIR"
-echo -e "#### concatenate.sh: Set ID: $SET_ID \n\n"
+echo -e "#### concatenate.sh: Number of threads: $nt"
+echo -e "#### concatenate.sh: Alignment directory: $alignment_dir"
+echo -e "#### concatenate.sh: Set ID: $set_id \n\n"
 
 ################################################################################
 #### CONCATENATE LOCUS ALIGNMENTS ####
 ################################################################################
 echo -e "#### concatenate.sh: Concatenating locus alignments ..."
-python $AMAS concat -i $ALIGNMENT_DIR/*.muscle.fa -t $ALIGNMENT_DIR/$SET_ID.concatenated.nex -p $ALIGNMENT_DIR/$SET_ID.partitions.txt -f fasta -d dna -u nexus -c $NT
+python $amas concat -i $alignment_dir/*.muscle.fa -t $alignment_dir/$set_id.concatenated.nex -p $alignment_dir/$set_id.partitions.txt -f fasta -d dna -u nexus -c $nt
 
 echo -e "#### concatenate.sh: Replacing 'N' by '?' ..."
-head -n 6 $ALIGNMENT_DIR/$SET_ID.concatenated.nex
-awk 'NR>=7 {gsub("N","?",$2)}1' $ALIGNMENT_DIR/$SET_ID.concatenated.nex > $ALIGNMENT_DIR/$SET_ID.concatenated.nex.tmp
-mv $ALIGNMENT_DIR/$SET_ID.concatenated.nex.tmp $ALIGNMENT_DIR/$SET_ID.concatenated.nex
+head -n 6 $alignment_dir/$set_id.concatenated.nex
+awk 'NR>=7 {gsub("N","?",$2)}1' $alignment_dir/$set_id.concatenated.nex > $alignment_dir/$set_id.concatenated.nex.tmp
+mv $alignment_dir/$set_id.concatenated.nex.tmp $alignment_dir/$set_id.concatenated.nex
 
 echo -e "#### concatenate.sh: Converting NEXUS to PHYLIP format ..."
-python $AMAS convert -i $ALIGNMENT_DIR/$SET_ID.concatenated.nex -f nexus -u phylip -d dna
-mv $ALIGNMENT_DIR/$SET_ID.concatenated.nex-out.phy $ALIGNMENT_DIR/$SET_ID.concatenated.phy
+python $amas convert -i $alignment_dir/$set_id.concatenated.nex -f nexus -u phylip -d dna
+mv $alignment_dir/$set_id.concatenated.nex-out.phy $alignment_dir/$set_id.concatenated.phy
 
 ## Report:
 echo -e "#### concatenate.sh: Done with script."

@@ -8,29 +8,29 @@ set -euo pipefail
 ################################################################################
 
 ## Command-line args:
-SCRIPTS_DIR=$1
-MCMC1=$2
-MCMC2=$3
-MCMC3=$4
-MCMC4=$5
-MCMC_OUT=$6
+scripts_dir=$1
+mcmc1=$2
+mcmc2=$3
+mcmc3=$4
+mcmc4=$5
+mcmc_out=$6
 
 ## Report:
 echo -e "\n\n###################################################################"
 date
 echo -e "#### average_mcmcs.sh: Starting script."
-echo -e "#### average_mcmcs.sh: Directory with scripts: $SCRIPTS_DIR"
-echo -e "#### average_mcmcs.sh: First MCMC: $MCMC1"
-echo -e "#### average_mcmcs.sh: Second MCMC: $MCMC2"
-echo -e "#### average_mcmcs.sh: Third MCMC: $MCMC3"
-echo -e "#### average_mcmcs.sh: Fourth MCMC: $MCMC4"
-echo -e "#### average_mcmcs.sh: MCMC output: $MCMC_OUT \n\n"
+echo -e "#### average_mcmcs.sh: Directory with scripts: $scripts_dir"
+echo -e "#### average_mcmcs.sh: First MCMC: $mcmc1"
+echo -e "#### average_mcmcs.sh: Second MCMC: $mcmc2"
+echo -e "#### average_mcmcs.sh: Third MCMC: $mcmc3"
+echo -e "#### average_mcmcs.sh: Fourth MCMC: $mcmc4"
+echo -e "#### average_mcmcs.sh: MCMC output: $mcmc_out \n\n"
 
 ################################################################################
 #### AVERAGE MCMCS ####
 ################################################################################
 echo -e "#### average_mcmcs.sh: Averaging MCMCs ..."
-Rscript $SCRIPTS_DIR/average_mcmcs.R $MCMC1 $MCMC2 $MCMC3 $MCMC4 $MCMC_OUT
+Rscript $scripts_dir/average_mcmcs.R $mcmc1 $mcmc2 $mcmc3 $mcmc4 $mcmc_out
 
 ## Report:
 echo -e "\n#### average_mcmcs.sh: Done with script."

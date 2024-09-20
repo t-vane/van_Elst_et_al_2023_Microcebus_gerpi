@@ -30,10 +30,10 @@ echo -e "#### 00_filter_indels_invariants.sh: Output VCF: $vcf_out \n\n"
 #### REMOVE INDELS AND INVARIANT SITES ####
 ################################################################################
 echo -e "#### 00_filter_indels_invariants.sh: Removing indels ...\n"
-java -jar $gatk3 -T SelectVariants -R $reference -V $vcf_in -o $(dirname $vcf_in)/$(basename $vcf_in .vcf)/.tmp.vcf -selectType SNP
+java -jar $gatk3 -T SelectVariants -R $reference -V $vcf_in -o $(dirname $vcf_in)/$(basename $vcf_in .vcf).tmp.vcf -selectType SNP
 
 echo -e "#### 00_filter_indels_invariants.sh: Removing invariant sites ...\n"
-vcftools --vcf $(dirname $vcf_in)/$(basename $vcf_in .vcf)/.tmp.vcf --recode --recode-INFO-all --max-non-ref-af 0.99 --min-alleles 2 --stdout > $vcf_out
+vcftools --vcf $(dirname $vcf_in)/$(basename $vcf_in .vcf).tmp.vcf --recode --recode-INFO-all --max-non-ref-af 0.99 --min-alleles 2 --stdout > $vcf_out
 
 ## Report:
 nvar_in=$(grep -cv "^#" $vcf_in)

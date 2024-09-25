@@ -57,7 +57,7 @@ ind_file=$pop_dir/$set_id.txt # File with individual IDs in first columns and po
 
 until [[ $(cat $like_file | wc -l) == $(( $clusters*$repeats )) ]]
 do
-	sleep 5
+	sleep 5m
 done
 
 sbatch --account=nib00015 --output=$pop_dir/logFiles/plot_ngsadmix.$set_id.oe $scripts_dir/plot_ngsadmix.sh $scripts_dir $pop_dir/ngsadmix $like_file $ind_file $set_id

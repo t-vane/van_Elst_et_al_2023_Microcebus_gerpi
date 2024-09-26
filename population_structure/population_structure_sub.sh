@@ -36,8 +36,7 @@ nt=80
 ## Submit array job to infer individual ancestries for each number of clusters (ranging from 1 to $clusters), using $repeats repetitions 
 for k in $(seq 1 $clusters)
 do
-	jid=$(sbatch --array=1-$repeats --output=$pop_dir/logFiles/ngsadmix$k.$set_id.%A_%a.oe $scripts_dir/ngsadmix.sh $nt $k $beagle $pop_dir/ngsadmix $minind $set_id)
-	declare runid_$k=${jid##* }
+	sbatch --array=1-$repeats --output=$pop_dir/logFiles/ngsadmix$k.$set_id.%A_%a.oe $scripts_dir/ngsadmix.sh $nt $k $beagle $pop_dir/ngsadmix $minind $set_id
 done
 
 ## Print likelihood values file
@@ -47,8 +46,12 @@ for k in $(seq 1 $clusters);
 do
 	for seed in $(seq 1 $repeats)
 	do
-		[[ $k == 1 ]] && [[ $seed == 1 ]] && varname=runid_$k && jid=$(sbatch --account=nib00015 --dependency=afterok:${!varname} --output=$pop_dir/logFiles/print_likes.$set_id.oe $scripts_dir/best_likes.sh $pop_dir/ngsadmix/$set_id.K$k.seed$seed.log $like_file $k $seed)
-		[[ $k != 1 ]] || [[ $seed != 1 ]] && varname=runid_$k && jid=$(sbatch --account=nib00015 --dependency=afterok:${!varname}:${jid##* } --output=$pop_dir/logFiles/print_likes.$set_id.oe $scripts_dir/best_likes.sh $pop_dir/ngsadmix/$set_id.K$k.seed$seed.log $like_file $k $seed)
+		until [ -f $pop_dir/ngsadmix/$set_id.K$k.seed$seed.qopt ]
+		do
+			sleep 5m
+		done
+		
+		sbatch --account=nib00015 --output=$pop_dir/logFiles/print_likes.$set_id.oe $scripts_dir/best_likes.sh $pop_dir/ngsadmix/$set_id.K$k.seed$seed.log $like_file $k $seed
 	done
 done
 
